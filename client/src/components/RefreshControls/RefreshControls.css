@@ -1,0 +1,45 @@
+.refresh-countdown {
+    color: #9299a7;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.updated-label  {
+    font-size: 11px;
+    color: #a0a7b4;
+    border: 1px solid #343a46;
+    border-radius: 6px;
+    padding: 7px 10px;
+    white-space: nowrap;
+}
+
+.refresh-controls  {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.refresh-button  {
+    background: #272e3a;
+    border: 1px solid #465061;
+    color: #f0f2f6;
+    border-radius: 6px;
+    padding: 7px 13px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.refresh-button:hover:not(:disabled)  {
+    background: #354052;
+}
+
+.refresh-button:disabled  {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.refresh-button:focus-visible  {
+    outline: 2px solid #eac18b;
+    outline-offset: 2px;
+}

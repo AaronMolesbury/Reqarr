@@ -1,0 +1,74 @@
+.integrations {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.integration {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #aab1bd;
+    font-size: 12px;
+    cursor: help;
+}
+
+.integration-dot {
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #777f8e;
+}
+
+.integration-dot-success {
+    background: #00da66;
+}
+
+.integration-dot-partial,
+.integration-dot-stale {
+    background: #e0ae59;
+}
+
+.integration-dot-error {
+    background: #e20303;
+}
+
+.integration-tooltip {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 10;
+    width: 190px;
+    padding: 9px 12px;
+    border: 1px solid #343b48;
+    border-radius: 6px;
+    background: #1a1e27;
+    color: #cbd0d9;
+    line-height: 1.5;
+}
+
+.integration:hover .integration-tooltip,
+.integration:focus .integration-tooltip {
+    display: block;
+}
+
+.integration:focus-visible {
+    outline: 2px solid #aab1bd;
+    outline-offset: 4px;
+    border-radius: 2px;
+}
+
+@media (max-width: 420px) {
+    .integrations {
+        gap: 6px 10px;
+        max-width: 150px;
+    }
+
+    .integration {
+        font-size: 10px;
+    }
+}

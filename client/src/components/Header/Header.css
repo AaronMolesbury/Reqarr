@@ -1,0 +1,44 @@
+.topbar {
+    height: 76px;
+    border-bottom: 1px solid #292d36;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5.5%;
+    background: #15181f;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-mark {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #d9e4ff;
+    color: #1b2946;
+    font-weight: 800;
+}
+
+.brand-name {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+.brand-subtitle {
+    color: #858c9a;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+@media (max-width: 760px) {
+    .topbar {
+        padding: 0 5%;
+    }
+}

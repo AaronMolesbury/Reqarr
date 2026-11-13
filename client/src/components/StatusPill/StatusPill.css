@@ -1,0 +1,58 @@
+.status  {
+    display: inline-block;
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-available  {
+    color: #91d4b0;
+    background: #1d382e;
+}
+
+.status-downloading  {
+    color: #9fc3f5;
+    background: #202f47;
+}
+
+.status-searching  {
+    color: #c4b2ef;
+    background: #302842;
+}
+
+.status-needs-attention {
+    color: #f0c27f;
+    background: #463521;
+}
+
+.status-partially-available  {
+    color: #ead09a;
+    background: #3f3527;
+}
+
+.status-processing  {
+    color: #9fc3f5;
+    background: #202f47;
+}
+
+.status-pending, .status-unknown  {
+    color: #c4b2ef;
+    background: #302842;
+}
+
+.status-deleted  {
+    color: #f0a2a2;
+    background: #43272b;
+}
+
+.status-awaiting-release  {
+    color: #ead09a;
+    background: #3f3527;
+}
+
+.status-missing {
+    color: #ead09a;
+    background: #3f3527;
+}
