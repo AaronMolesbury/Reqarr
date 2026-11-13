@@ -79,9 +79,9 @@ func applyActivity(items []model.Request, mediaIDs map[int]int, queue []upstream
 		if id == 0 {
 			continue
 		}
-		// A Seerr-available item stays available; the queue may represent an
+		// Imported content stays available; the queue may represent an
 		// optional quality upgrade or another TV episode.
-		if items[i].MediaStatus != 5 {
+		if items[i].EffectiveStatus() != model.StatusAvailable && !items[i].AvailabilityStale {
 			for _, q := range byID[id] {
 				state := queueState(q)
 				if source == "radarr" && state != "" && items[i].StatusOverride != model.StatusNeedsAttention {

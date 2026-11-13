@@ -14,6 +14,17 @@ type Series struct {
 	Statistics struct {
 		EpisodeFileCount int `json:"episodeFileCount"`
 	} `json:"statistics"`
+	Seasons []Season `json:"seasons"`
+}
+
+type Season struct {
+	SeasonNumber *int              `json:"seasonNumber"`
+	Statistics   *SeasonStatistics `json:"statistics"`
+}
+
+type SeasonStatistics struct {
+	EpisodeFileCount  *int `json:"episodeFileCount"`
+	TotalEpisodeCount *int `json:"totalEpisodeCount"`
 }
 
 func FetchSonarrSeries(ctx context.Context, client *http.Client, service config.Service) (map[int]Series, error) {

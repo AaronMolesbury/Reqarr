@@ -145,7 +145,7 @@ func TestMissingStatePersistsAndAttentionNotifiesOnce(t *testing.T) {
 		}
 	}
 	defer db.Close()
-	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != "Reqarr: missing for 10 minutes" {
+	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != "Reqarr: Needs attention" {
 		t.Fatalf("expected one attention notification after the silent baseline: %v", got)
 	}
 	tracker = &MissingTracker{DB: db}

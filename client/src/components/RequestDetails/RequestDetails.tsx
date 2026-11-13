@@ -50,6 +50,23 @@ export default function RequestDetails({ request, onClose }: RequestDetailsProps
                         {request.statusReason}
                     </p>
                 )}
+                {request.availabilitySource && (
+                    <div className="detail-line">
+                        <span>Availability source</span>
+                        <strong>
+                            {{ seerr: 'Seerr', radarr: 'Radarr', sonarr: 'Sonarr' }[request.availabilitySource]}
+                            {request.availabilityStale ? ' (unconfirmed)' : ''}
+                        </strong>
+                    </div>
+                )}
+                {request.type === 'tv' && Boolean(request.requestedSeasons?.length) && (
+                    <div className="detail-line">
+                        <span>Requested seasons</span>
+                        <strong>
+                            {request.requestedSeasons?.join(', ')}
+                        </strong>
+                    </div>
+                )}
                 {request.radarrStatus && (
                     <div className="detail-line">
                         <span>Radarr release status</span>
@@ -90,7 +107,7 @@ export default function RequestDetails({ request, onClose }: RequestDetailsProps
                         {"Seerr reports "}
                         {(statusLabels[request.mediaStatus] ?? "Unknown").toLowerCase()}
                         .
-                        {request.statusOverride ? ` ${request.type === "tv" ? "Sonarr" : "Radarr"} indicates ${request.statusOverride.toLowerCase()}.` : ""}
+                        {request.statusOverride ? ` Dashboard status: ${request.statusOverride.toLowerCase()}${request.availabilityStale ? ' (unconfirmed)' : ''}.` : ""}
                         {" "}
                         {request.downloadEntries === 0 ? 'No download entries are present in its response.' : `${request.downloadEntries} download entries reported.`}
                     </p>

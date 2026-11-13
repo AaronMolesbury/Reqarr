@@ -47,7 +47,10 @@ func (t *MissingTracker) Apply(ctx context.Context, snapshot model.Snapshot, fet
 			if item.Type != "movie" {
 				continue
 			}
-			if item.MediaStatus == 5 || item.MediaStatus == 4 || (item.RadarrHasFile != nil && *item.RadarrHasFile) || (item.StatusOverride != "" && item.StatusOverride != model.StatusMissing) {
+			if item.AvailabilityStale {
+				continue
+			}
+			if item.EffectiveStatus() == model.StatusAvailable || item.EffectiveStatus() == model.StatusPartiallyAvailable || (item.RadarrHasFile != nil && *item.RadarrHasFile) || (item.StatusOverride != "" && item.StatusOverride != model.StatusMissing) {
 				delete(next, item.ID)
 				continue
 			}

@@ -9,11 +9,14 @@ import (
 )
 
 type SeerrRequest struct {
-	ID          int    `json:"id"`
-	Type        string `json:"type"`
-	Status      int    `json:"status"`
-	UpdatedAt   string `json:"updatedAt"`
-	CreatedAt   string `json:"createdAt"`
+	ID        int    `json:"id"`
+	Type      string `json:"type"`
+	Status    int    `json:"status"`
+	UpdatedAt string `json:"updatedAt"`
+	CreatedAt string `json:"createdAt"`
+	Seasons   []struct {
+		SeasonNumber *int `json:"seasonNumber"`
+	} `json:"seasons"`
 	RequestedBy struct {
 		DisplayName string `json:"displayName"`
 		Username    string `json:"username"`

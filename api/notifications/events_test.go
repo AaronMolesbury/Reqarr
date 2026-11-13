@@ -83,7 +83,7 @@ func TestNotificationsBaselineAndRestart(t *testing.T) {
 	snapshot.Requests[0].StatusOverride = ""
 	observeTest(t, db, snapshot, nil, now.Add(2*time.Minute))
 	observeTest(t, db, snapshot, nil, now.Add(3*time.Minute))
-	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != "Reqarr: available" {
+	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != completedTitle {
 		t.Fatalf("expected one availability event: %v", got)
 	}
 }
@@ -102,13 +102,13 @@ func TestNotificationsNewRequestsAndKnownStatusChanges(t *testing.T) {
 		model.Request{ID: 3, Type: "tv", CreatedAt: now.Add(-time.Hour).Format(time.RFC3339Nano), RequestStatus: 2, MediaStatus: 5})
 	observeTest(t, db, snapshot, nil, now.Add(time.Minute))
 	got := pendingNotifications(t, db)
-	if len(got) != 3 || got[0] != "Reqarr: new request" || got[1] != "Reqarr: request pending" || got[2] != "Reqarr: media pending" {
+	if len(got) != 1 || got[0] != newRequestTitle {
 		t.Fatalf("new requests eligible; newly discovered old requests silent: %v", got)
 	}
 	snapshot.Requests[1].RequestStatus = 3
 	observeTest(t, db, snapshot, nil, now.Add(2*time.Minute))
 	got = pendingNotifications(t, db)
-	if got[len(got)-1] != "Reqarr: request declined" {
+	if got[len(got)-1] != attentionTitle {
 		t.Fatalf("missing decline: %v", got)
 	}
 }
@@ -135,14 +135,14 @@ func TestNotificationIncidentsAndUpstreamFailures(t *testing.T) {
 	snapshot.Integrations["radarr"] = "success"
 	snapshot.Requests[0].StatusOverride = "Needs attention"
 	observeTest(t, db, snapshot, nil, now.Add(5*time.Minute))
-	if got := pendingNotifications(t, db); len(got) != 3 {
+	if got := pendingNotifications(t, db); len(got) != 2 {
 		t.Fatalf("failure/recovery must not reset a request incident: %v", got)
 	}
 	snapshot.Requests[0].StatusOverride = "Downloading"
 	observeTest(t, db, snapshot, nil, now.Add(6*time.Minute))
 	snapshot.Requests[0].StatusOverride = "Needs attention"
 	observeTest(t, db, snapshot, nil, now.Add(7*time.Minute))
-	if got := pendingNotifications(t, db); len(got) != 5 {
+	if got := pendingNotifications(t, db); len(got) != 3 {
 		t.Fatalf("confirmed progress allows a later incident: %v", got)
 	}
 }
@@ -168,7 +168,7 @@ func TestFailedInitialPollAndOldHistory(t *testing.T) {
 	observeTest(t, db, snapshot, nil, now.Add(4*time.Minute))
 	observeTest(t, db, snapshot, nil, now.Add(5*time.Minute))
 	got := pendingNotifications(t, db)
-	if len(got) != 2 || got[0] != "Reqarr: grabbed" || got[1] != "Reqarr: imported" {
+	if len(got) != 0 {
 		t.Fatalf("history replay or incorrect import availability: %v", got)
 	}
 }
@@ -244,7 +244,7 @@ func TestNotificationStateAndOutboxAreAtomic(t *testing.T) {
 		t.Fatal(err)
 	}
 	observeTest(t, db, snapshot, nil, now.Add(2*time.Minute))
-	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != "Reqarr: available" {
+	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != completedTitle {
 		t.Fatalf("state advanced without durable notification: %v", got)
 	}
 }
@@ -316,12 +316,12 @@ func TestSonarrNotificationsAreSeriesActivityAndDeduplicateSharedRequests(t *tes
 	snapshot.Requests[1].ID = 3
 	observeTest(t, db, snapshot, nil, now.Add(2*time.Minute))
 	observeTest(t, db, snapshot, nil, now.Add(3*time.Minute))
-	if got := pendingNotifications(t, db); len(got) != 2 || got[0] != "Reqarr: series needs attention" || got[1] != "Reqarr: download failed" {
+	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != attentionTitle {
 		t.Fatalf("series activity must be qualified and shared events deduplicated: %v", got)
 	}
 	var message string
-	if err := db.QueryRow("SELECT message FROM notification_outbox ORDER BY id LIMIT 1").Scan(&message); err != nil || !strings.Contains(message, "outside the requested season") {
-		t.Fatal("series activity was presented as requested-season evidence")
+	if err := db.QueryRow("SELECT message FROM notification_outbox ORDER BY id LIMIT 1").Scan(&message); err != nil || message != "Request had a problem; see dashboard for details." {
+		t.Fatal("attention push must stay generic")
 	}
 }
 
@@ -356,8 +356,8 @@ func TestMovieQueueIncidentsDoNotRepeatWhenOtherItemsDisappear(t *testing.T) {
 	observeTest(t, db, snapshot, nil, now.Add(time.Minute))
 	snapshot.Requests[0].Activity = snapshot.Requests[0].Activity[1:]
 	observeTest(t, db, snapshot, nil, now.Add(2*time.Minute))
-	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != "Reqarr: needs attention" {
-		t.Fatalf("only the new queue incident should alert: %v", got)
+	if got := pendingNotifications(t, db); len(got) != 0 {
+		t.Fatalf("another queue item must not repeat an active problem: %v", got)
 	}
 	// Missing queue entries are not proof of recovery; their return is silent.
 	snapshot.Requests[0].StatusOverride = ""
@@ -366,7 +366,7 @@ func TestMovieQueueIncidentsDoNotRepeatWhenOtherItemsDisappear(t *testing.T) {
 	snapshot.Requests[0].StatusOverride = "Needs attention"
 	snapshot.Requests[0].Activity = []model.Activity{{Source: "radarr", QueueID: 43, QueueState: "Needs attention"}}
 	observeTest(t, db, snapshot, nil, now.Add(4*time.Minute))
-	if got := pendingNotifications(t, db); len(got) != 1 {
+	if got := pendingNotifications(t, db); len(got) != 0 {
 		t.Fatalf("a missing queue entry reset the incident: %v", got)
 	}
 	// A positive state change allows a later recurrence for the same queue ID.
@@ -376,7 +376,7 @@ func TestMovieQueueIncidentsDoNotRepeatWhenOtherItemsDisappear(t *testing.T) {
 	snapshot.Requests[0].StatusOverride = "Needs attention"
 	snapshot.Requests[0].Activity[0].QueueState = "Needs attention"
 	observeTest(t, db, snapshot, nil, now.Add(6*time.Minute))
-	if got := pendingNotifications(t, db); len(got) != 3 || got[2] != "Reqarr: needs attention" {
+	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != attentionTitle {
 		t.Fatalf("confirmed progress should allow a later recurrence: %v", got)
 	}
 }
@@ -446,13 +446,8 @@ func TestMissingClassificationDoesNotReplayExistingRequestsOrInventFailure(t *te
 	snapshot.Requests = append(snapshot.Requests, item)
 	observeTest(t, db, snapshot, nil, now.Add(3*time.Minute))
 	observeTest(t, db, snapshot, nil, now.Add(4*time.Minute))
-	var count, priority int
-	var message string
-	if err := db.QueryRow("SELECT count(*),min(priority),min(message) FROM notification_outbox WHERE title='Reqarr: missing'").Scan(&count, &priority, &message); err != nil {
-		t.Fatal(err)
-	}
-	if count != 1 || priority != 3 || !strings.Contains(message, "does not mean a search or download failed") {
-		t.Fatalf("missing must be deduplicated, informational and explicit about its limits: count=%d priority=%d message=%q", count, priority, message)
+	if got := pendingNotifications(t, db); len(got) != 1 || got[0] != newRequestTitle {
+		t.Fatalf("Missing is dashboard-only; a new request should emit exactly one push: %v", got)
 	}
 }
 

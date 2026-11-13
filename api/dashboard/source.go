@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"log"
+	"slices"
 	"sync"
 	"time"
 
@@ -23,6 +24,7 @@ type Source struct {
 	snapshot      model.Snapshot
 	err           error
 	Missing       *MissingTracker
+	confirmed     map[int]model.Request
 }
 
 func (s *Source) Get(ctx context.Context) (model.Snapshot, error) {
@@ -62,6 +64,16 @@ func (s *Source) poll(done chan struct{}) {
 	if ctx.Err() != nil {
 		err = ctx.Err()
 	}
+	if err == nil {
+		for i := range snapshot.Requests {
+			item := &snapshot.Requests[i]
+			previous, found := s.confirmed[item.ID]
+			if item.AvailabilityStale && found && previous.Type == item.Type && previous.TMDBID == item.TMDBID && previous.TVDBID == item.TVDBID && previous.AvailabilitySource == item.AvailabilitySource && slices.Equal(previous.RequestedSeasons, item.RequestedSeasons) {
+				item.StatusOverride = previous.EffectiveStatus()
+				item.StatusReason = "Showing the last confirmed status; current imported availability could not be checked."
+			}
+		}
+	}
 	if s.Missing != nil && ctx.Err() == nil {
 		tracked, trackingErr := s.Missing.Apply(ctx, snapshot, err, time.Now())
 		if trackingErr != nil {
@@ -69,6 +81,17 @@ func (s *Source) poll(done chan struct{}) {
 		} else {
 			snapshot = tracked
 		}
+	}
+	if err == nil {
+		next := make(map[int]model.Request)
+		for _, item := range snapshot.Requests {
+			if !item.AvailabilityStale {
+				next[item.ID] = item
+			} else if previous, found := s.confirmed[item.ID]; found {
+				next[item.ID] = previous
+			}
+		}
+		s.confirmed = next
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()

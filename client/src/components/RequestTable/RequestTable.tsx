@@ -22,7 +22,7 @@ export default function RequestTable({ requests, filter, onFilterChange, onSelec
             <div className="panel-heading">
                 <div>
                     <h2>Recent requests</h2>
-                    <p className="muted">Seerr availability with optional Radarr/Sonarr status</p>
+                    <p className="muted">Seerr requests with Radarr/Sonarr library availability</p>
                 </div>
                 <label className="filter-control">
                     <span className="sr-only">Filter requests</span>
@@ -86,6 +86,9 @@ export default function RequestTable({ requests, filter, onFilterChange, onSelec
                                 </td>
                                 <td>
                                     <StatusPill status={statusOf(request)} reason={request.statusReason} />
+                                    {request.availabilityStale && (
+                                        <span className="request-meta">Unconfirmed</span>
+                                    )}
                                 </td>
                                 <td className="muted">
                                     {dateLabel(request.updatedAt)}

@@ -1,0 +1,31 @@
+services:
+    reqarr:
+        build: .
+        image: reqarr:local
+        container_name: reqarr
+        restart: unless-stopped
+        environment:
+            - SEERR_URL=https://seerr.example.com
+            - SEERR_API_KEY=replace-with-seerr-api-key
+            # Optional: set both URL and key, or leave both empty.
+            - RADARR_URL=
+            - RADARR_API_KEY=
+            - SONARR_URL=
+            - SONARR_API_KEY=
+            - NOTIFICATIONS_ENABLED=false
+            - NOTIFICATION_INTERVAL=15s
+            - NTFY_URL=https://ntfy.example.com
+            - NTFY_TOPIC=reqarr
+            # Use a token OR username/password, never both.
+            - NTFY_TOKEN=
+            - NTFY_USERNAME=
+            - NTFY_PASSWORD=
+        ports:
+            - "127.0.0.1:8080:8080"
+        volumes:
+            - ./reqarr:/data
+        security_opt:
+            - no-new-privileges:true
+        cap_drop:
+            - ALL
+

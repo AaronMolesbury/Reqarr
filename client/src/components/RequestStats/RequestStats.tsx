@@ -34,7 +34,7 @@ export default function RequestStats({ requests }: { requests: MediaRequest[] })
                 <strong>
                     {availableCount}
                 </strong>
-                <span className="stat-note">Reported by Seerr</span>
+                <span className="stat-note">Library availability</span>
             </article>
             <article className="stat-card">
                 <span className="stat-label">Partially available</span>

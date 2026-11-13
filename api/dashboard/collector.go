@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -78,6 +79,29 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 			Requester: requester, RequestStatus: item.Status, MediaStatus: item.Media.Status,
 			UpdatedAt: item.UpdatedAt, CreatedAt: item.CreatedAt, TMDBID: item.Media.TMDBID, TVDBID: item.Media.TVDBID,
 			DownloadEntries: len(item.Media.DownloadStatus)}
+		items[i].AvailabilitySource = "seerr"
+		for _, season := range item.Seasons {
+			if season.SeasonNumber == nil || *season.SeasonNumber < 0 {
+				items[i].RequestedSeasons = nil
+				break
+			}
+			items[i].RequestedSeasons = append(items[i].RequestedSeasons, *season.SeasonNumber)
+		}
+		slices.Sort(items[i].RequestedSeasons)
+		items[i].RequestedSeasons = slices.Compact(items[i].RequestedSeasons)
+		service := ""
+		if item.Type == "movie" && radarr.URL != "" {
+			service = "radarr"
+		}
+		if item.Type == "tv" && sonarr.URL != "" {
+			service = "sonarr"
+		}
+		if service != "" {
+			items[i].AvailabilitySource = service
+			items[i].AvailabilityStale = true
+			items[i].StatusOverride = model.StatusUnknown
+			items[i].StatusReason = "Imported availability could not be confirmed from " + service + "."
+		}
 		if item.Media.TMDBID <= 0 || (item.Type != "movie" && item.Type != "tv") {
 			items[i].Title = "Unknown title"
 			continue
@@ -118,14 +142,13 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 	}
 	radarrIDs := make(map[int]int)
 	sonarrIDs := make(map[int]int)
-	// Optional Radarr enrichment. If Radarr cannot be reached, keep Seerr's
-	// original state rather than inventing a more precise status.
+	// Explicit imported-file evidence takes precedence over Seerr's media status.
 	if radarr.URL != "" {
 		movies, err := upstream.FetchRadarrMovies(ctx, client, radarr)
 		integrations["radarr"] = model.IntegrationSuccess
 		if err != nil {
 			integrations["radarr"] = model.IntegrationError
-			log.Printf("Radarr lookup failed (using Seerr status): %v", err)
+			log.Printf("Radarr lookup failed (availability unconfirmed): %v", err)
 		} else {
 			for i := range items {
 				if items[i].Type != "movie" || items[i].TMDBID <= 0 {
@@ -136,6 +159,20 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 					items[i].RadarrHasFile = movie.HasFile
 					radarrIDs[i] = movie.ID
 					items[i].StatusOverride = radarrStatusOverride(movie, items[i].MediaStatus)
+					if movie.HasFile != nil {
+						items[i].AvailabilityStale = false
+						items[i].StatusReason = ""
+						if *movie.HasFile {
+							items[i].StatusReason = "Radarr confirms an imported movie file. Media-server indexing is separate."
+						}
+					}
+				} else {
+					items[i].StatusOverride = model.StatusProcessing
+					if items[i].MediaStatus == 2 {
+						items[i].StatusOverride = model.StatusPending
+					}
+					items[i].AvailabilityStale = false
+					items[i].StatusReason = "No matching movie was found in Radarr; this does not prove a search or download failed."
 				}
 			}
 		}
@@ -147,7 +184,7 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 		integrations["sonarr"] = model.IntegrationSuccess
 		if err != nil {
 			integrations["sonarr"] = model.IntegrationError
-			log.Printf("Sonarr lookup failed (using Seerr status): %v", err)
+			log.Printf("Sonarr lookup failed (availability unconfirmed): %v", err)
 		} else {
 			for i := range items {
 				if items[i].Type != "tv" || items[i].TVDBID <= 0 {
@@ -156,15 +193,29 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 				if show, found := series[items[i].TVDBID]; found {
 					items[i].SonarrStatus = show.Status
 					sonarrIDs[i] = show.ID
-					if items[i].MediaStatus == 3 && show.Status == "upcoming" && show.Statistics.EpisodeFileCount == 0 {
-						items[i].StatusOverride = model.StatusAwaitingRelease
+					status, known := sonarrStatusOverride(show, items[i].RequestedSeasons)
+					items[i].StatusOverride = status
+					items[i].AvailabilityStale = !known
+					if known {
+						items[i].StatusReason = ""
+						if status == model.StatusAvailable {
+							items[i].StatusReason = "Sonarr confirms files for all known episodes in the requested seasons. Media-server indexing is separate."
+						}
+					} else {
+						items[i].StatusReason = "Requested-season availability could not be confirmed from Sonarr."
 					}
+				} else {
+					items[i].StatusOverride = model.StatusProcessing
+					if items[i].MediaStatus == 2 {
+						items[i].StatusOverride = model.StatusPending
+					}
+					items[i].AvailabilityStale = false
+					items[i].StatusReason = "No matching series was found in Sonarr; this does not prove a search or download failed."
 				}
 			}
 		}
 	}
-	// Queue and recent history are optional. Failure does not prevent the
-	// dashboard rendering existing Seerr availability information.
+	// Queue/history failures do not invalidate a successful imported-file lookup.
 	if radarr.URL != "" && len(radarrIDs) > 0 {
 		queue, qe := upstream.FetchArrPages[upstream.QueueRecord](ctx, client, radarr.URL, radarr.Key, "queue", 500)
 		history, he := upstream.FetchArrPages[upstream.HistoryRecord](ctx, client, radarr.URL, radarr.Key, "history", 500)

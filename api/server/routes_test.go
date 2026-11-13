@@ -159,7 +159,7 @@ func TestDashboardRadarrAvailability(t *testing.T) {
 	if got.Requests[0].StatusOverride != "Awaiting release" || got.Requests[0].RadarrStatus != "inCinemas" {
 		t.Fatalf("expected awaiting release: %+v", got.Requests[0])
 	}
-	if got.Requests[1].StatusOverride != "" {
+	if got.Requests[1].StatusOverride != "Available" {
 		t.Fatalf("available movie overridden: %+v", got.Requests[1])
 	}
 	if got.Requests[2].StatusOverride != "" {
@@ -167,7 +167,7 @@ func TestDashboardRadarrAvailability(t *testing.T) {
 	}
 }
 
-func TestDashboardRadarrFailureKeepsSeerrStatus(t *testing.T) {
+func TestDashboardRadarrFailureLeavesAvailabilityUnconfirmed(t *testing.T) {
 	seerr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/request" {
 			_, _ = w.Write([]byte(`{"pageInfo":{"results":1},"results":[{"id":1,"type":"movie","media":{"tmdbId":15,"status":3}}]}`))
@@ -194,12 +194,12 @@ func TestDashboardRadarrFailureKeepsSeerrStatus(t *testing.T) {
 	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
 		t.Fatal(err)
 	}
-	if len(got.Requests) != 1 || got.Requests[0].MediaStatus != 3 || got.Requests[0].StatusOverride != "" {
+	if len(got.Requests) != 1 || got.Requests[0].MediaStatus != 3 || got.Requests[0].StatusOverride != "Unknown" || !got.Requests[0].AvailabilityStale {
 		t.Fatalf("unexpected fallback %+v", got.Requests)
 	}
 }
 
-func TestDashboardSonarrMatchingAndFallback(t *testing.T) {
+func TestDashboardSonarrMatchingRequiresRequestedSeasonEvidence(t *testing.T) {
 	seerr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/v1/request":
@@ -248,18 +248,18 @@ func TestDashboardSonarrMatchingAndFallback(t *testing.T) {
 	if len(data.Requests) != 3 {
 		t.Fatalf("requests: %+v", data.Requests)
 	}
-	if data.Requests[0].TVDBID != 101 || data.Requests[0].SonarrStatus != "upcoming" || data.Requests[0].StatusOverride != "Awaiting release" {
+	if data.Requests[0].TVDBID != 101 || data.Requests[0].SonarrStatus != "upcoming" || data.Requests[0].StatusOverride != "Unknown" || !data.Requests[0].AvailabilityStale {
 		t.Errorf("upcoming series %+v", data.Requests[0])
 	}
-	if data.Requests[1].TVDBID != 202 || data.Requests[1].StatusOverride != "" {
+	if data.Requests[1].TVDBID != 202 || data.Requests[1].StatusOverride != "Unknown" || !data.Requests[1].AvailabilityStale {
 		t.Errorf("continuing series %+v", data.Requests[1])
 	}
-	if data.Requests[2].TVDBID != 303 || data.Requests[2].StatusOverride != "" {
+	if data.Requests[2].TVDBID != 303 || data.Requests[2].StatusOverride != "Unknown" || !data.Requests[2].AvailabilityStale {
 		t.Errorf("available series %+v", data.Requests[2])
 	}
 }
 
-func TestDashboardSonarrFailureKeepsSeerrStatus(t *testing.T) {
+func TestDashboardSonarrFailureLeavesAvailabilityUnconfirmed(t *testing.T) {
 	seerr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/request" {
 			_, _ = w.Write([]byte(`{"pageInfo":{"results":1},"results":[{"id":7,"type":"tv","media":{"tmdbId":10,"tvdbId":20,"status":3}}]}`))
@@ -283,7 +283,7 @@ func TestDashboardSonarrFailureKeepsSeerrStatus(t *testing.T) {
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		t.Fatal(err)
 	}
-	if resp.StatusCode != 200 || len(data.Requests) != 1 || data.Requests[0].StatusOverride != "" {
+	if resp.StatusCode != 200 || len(data.Requests) != 1 || data.Requests[0].StatusOverride != "Unknown" || !data.Requests[0].AvailabilityStale {
 		t.Fatalf("fallback %+v; status %d", data, resp.StatusCode)
 	}
 }

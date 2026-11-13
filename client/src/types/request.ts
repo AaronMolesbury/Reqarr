@@ -16,6 +16,9 @@ export type MediaRequest = {
     downloadEntries: number
     statusOverride?: string
     statusReason?: string
+    requestedSeasons?: number[]
+    availabilitySource?: 'seerr' | 'radarr' | 'sonarr'
+    availabilityStale?: boolean
     radarrStatus?: string
     sonarrStatus?: string
     activity?: { source: string; type: string; date?: string; message?: string }[]
