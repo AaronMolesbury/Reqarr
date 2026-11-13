@@ -8,6 +8,8 @@ NOTE: despite being public, this is just something I've built for my own setup a
 
 ## Docker setup
 
+Docker image: https://hub.docker.com/r/aaronmolesbury/reqarr
+
 Reqarr serves the dashboard and API from one container on port `8080`.
 
 For a published image, save this as `compose.yaml`. Replace `DOCKERHUB_ACCOUNT` with the published image account and fill in the environment values directly:
