@@ -4,6 +4,8 @@ Reqarr is a dashboard that lets you monitor requests status' from *arr services.
 
 NOTE: despite being public, this is just something I've built for my own setup and shared in case it’s useful to others. Support is limited/best-effort, and features follow my personal needs.
 
+<img width="1444" height="1177" alt="image" src="https://github.com/user-attachments/assets/6bd6da66-5812-4da1-83f7-d2995ca0fc40" />
+
 ## Docker setup
 
 Reqarr serves the dashboard and API from one container on port `8080`.
