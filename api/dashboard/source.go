@@ -14,17 +14,18 @@ import (
 // Successful and failed results both have a cooldown, so retries and multiple
 // tabs cannot multiply upstream polling. Caller cancellation only stops waiting.
 type Source struct {
-	Ctx           context.Context
-	Collect       func(context.Context) (model.Snapshot, error)
-	Cooldown      time.Duration
-	ErrorCooldown time.Duration
-	mu            sync.Mutex
-	running       chan struct{}
-	expires       time.Time
-	snapshot      model.Snapshot
-	err           error
-	Missing       *MissingTracker
-	confirmed     map[int]model.Request
+	Ctx            context.Context
+	Collect        func(context.Context) (model.Snapshot, error)
+	Cooldown       time.Duration
+	ErrorCooldown  time.Duration
+	mu             sync.Mutex
+	running        chan struct{}
+	expires        time.Time
+	snapshot       model.Snapshot
+	err            error
+	Missing        *MissingTracker
+	EpisodeMissing *EpisodeMissingTracker
+	confirmed      map[int]model.Request
 }
 
 func (s *Source) Get(ctx context.Context) (model.Snapshot, error) {
@@ -78,6 +79,14 @@ func (s *Source) poll(done chan struct{}) {
 		tracked, trackingErr := s.Missing.Apply(ctx, snapshot, err, time.Now())
 		if trackingErr != nil {
 			log.Print("Missing duration tracking failed; requests retain their upstream classifications")
+		} else {
+			snapshot = tracked
+		}
+	}
+	if s.EpisodeMissing != nil && ctx.Err() == nil {
+		tracked, trackingErr := s.EpisodeMissing.Apply(ctx, snapshot, err, time.Now())
+		if trackingErr != nil {
+			log.Print("Missing episode tracking failed; requests retain their upstream classifications")
 		} else {
 			snapshot = tracked
 		}

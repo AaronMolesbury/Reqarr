@@ -16,3 +16,5 @@ const (
 )
 
 const MissingAttentionReason = "Missing for at least 10 minutes. No active download or import was confirmed; this does not prove a search or download failed."
+
+const EpisodeMissingAttentionReason = "Requested episodes aired at least 24 hours ago and remained without an imported file or confirmed active download/import for at least 10 minutes. This does not prove a search or download failed."

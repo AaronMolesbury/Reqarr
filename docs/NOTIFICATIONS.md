@@ -35,7 +35,11 @@ Completion follows the dashboard's availability result:
 
 Available means imported into the managed library, independently of media-server indexing. Download completion or import history alone is insufficient. Seerr catching up afterward does not repeat the completion push.
 
-Explicit failures, queue problems and movies continuously confirmed Missing for 10 minutes can trigger attention. Related evidence shares one active incident; additional evidence stays silent until positive progress permits a new incident. Uncertain data does not establish recovery. Sonarr issues can concern other episodes in the same series; details remain on the dashboard.
+Explicit failures, queue problems and movies continuously confirmed Missing for 10 minutes can trigger attention. Related evidence shares one active incident; additional evidence stays silent until positive progress permits a new incident. Uncertain data does not establish recovery.
+
+Partial TV availability alone is silent. A requested episode must have aired at least 24 hours ago, explicitly have no imported file, and remain without a matching active download/import for 10 continuous confirmed minutes before raising Needs attention. Timers are per episode and persist in SQLite; missing episodes share one active notification incident per request. The dashboard lists the affected season/episode numbers. Importing the affected files or confirmed matching progress clears their timers, even if the series remains partially available.
+
+Failed lookups, capped queues, unknown air dates/file flags and ambiguous queue matches cannot start an incident. Unconfirmed observations or gaps over three minutes break a pending timer. Already raised incidents remain unresolved until positive evidence returns. Generic Sonarr queue/history issues can concern other episodes in the series; the timed missing check is limited to requested seasons.
 
 ## Persistence and timing
 

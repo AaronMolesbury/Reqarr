@@ -26,6 +26,7 @@ func TestClientAndAPIRouting(t *testing.T) {
 		{"/assets/app-123.js", 200, "console.log", "public, max-age=31536000, immutable"},
 		{"/api/health", 200, `"status":"ok"`, "no-store"},
 		{"/api/unknown", 404, "404", ""},
+		{"/api/requests", 404, "404", ""},
 		{"/assets/", 404, "404", ""},
 		{"/assets/missing.js", 404, "404", ""},
 		{"/missing", 404, "404", ""},

@@ -19,6 +19,8 @@ export type MediaRequest = {
     requestedSeasons?: number[]
     availabilitySource?: 'seerr' | 'radarr' | 'sonarr'
     availabilityStale?: boolean
+    episodeMissingStale?: boolean
+    missingEpisodes?: { seasonNumber: number; episodeNumber: number }[]
     radarrStatus?: string
     sonarrStatus?: string
     activity?: { source: string; type: string; date?: string; message?: string }[]

@@ -5,26 +5,47 @@ import (
 )
 
 type Request struct {
-	ID                 int        `json:"id"`
-	Title              string     `json:"title"`
-	Type               string     `json:"type"`
-	Requester          string     `json:"requester"`
-	RequestStatus      int        `json:"requestStatus"`
-	MediaStatus        int        `json:"mediaStatus"`
-	UpdatedAt          string     `json:"updatedAt"`
-	CreatedAt          string     `json:"createdAt"`
-	TMDBID             int        `json:"tmdbId"`
-	TVDBID             int        `json:"tvdbId,omitempty"`
-	DownloadEntries    int        `json:"downloadEntries"`
-	StatusOverride     string     `json:"statusOverride,omitempty"`
-	StatusReason       string     `json:"statusReason,omitempty"`
-	RadarrHasFile      *bool      `json:"-"`
-	RadarrStatus       string     `json:"radarrStatus,omitempty"`
-	SonarrStatus       string     `json:"sonarrStatus,omitempty"`
-	Activity           []Activity `json:"activity,omitempty"`
-	RequestedSeasons   []int      `json:"requestedSeasons,omitempty"`
-	AvailabilitySource string     `json:"availabilitySource,omitempty"`
-	AvailabilityStale  bool       `json:"availabilityStale,omitempty"`
+	ID                     int              `json:"id"`
+	Title                  string           `json:"title"`
+	Type                   string           `json:"type"`
+	Requester              string           `json:"requester"`
+	RequestStatus          int              `json:"requestStatus"`
+	MediaStatus            int              `json:"mediaStatus"`
+	UpdatedAt              string           `json:"updatedAt"`
+	CreatedAt              string           `json:"createdAt"`
+	TMDBID                 int              `json:"tmdbId"`
+	TVDBID                 int              `json:"tvdbId,omitempty"`
+	DownloadEntries        int              `json:"downloadEntries"`
+	StatusOverride         string           `json:"statusOverride,omitempty"`
+	StatusReason           string           `json:"statusReason,omitempty"`
+	RadarrHasFile          *bool            `json:"-"`
+	RadarrStatus           string           `json:"radarrStatus,omitempty"`
+	SonarrStatus           string           `json:"sonarrStatus,omitempty"`
+	Activity               []Activity       `json:"activity,omitempty"`
+	RequestedSeasons       []int            `json:"requestedSeasons,omitempty"`
+	AvailabilitySource     string           `json:"availabilitySource,omitempty"`
+	AvailabilityStale      bool             `json:"availabilityStale,omitempty"`
+	EpisodeCheck           *EpisodeCheck    `json:"-"`
+	EpisodeMissingResolved bool             `json:"-"`
+	EpisodeMissingStale    bool             `json:"episodeMissingStale,omitempty"`
+	MissingEpisodes        []MissingEpisode `json:"missingEpisodes,omitempty"`
+}
+
+type EpisodeCheck struct {
+	SeriesID int
+	Episodes []EpisodeEvidence
+}
+
+type EpisodeEvidence struct {
+	ID, SeasonNumber, EpisodeNumber int
+	HasFile                         *bool
+	AirDateUTC                      string
+	QueueState                      string
+}
+
+type MissingEpisode struct {
+	SeasonNumber  int `json:"seasonNumber"`
+	EpisodeNumber int `json:"episodeNumber"`
 }
 
 func (r Request) EffectiveStatus() string {

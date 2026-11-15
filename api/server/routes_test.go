@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,63 +10,15 @@ import (
 	"reqarr/model"
 )
 
-func TestRequestsForwardAndKeepSeerrJSON(t *testing.T) {
-	seerr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/v1/request" || r.URL.Query().Get("take") != "7" || r.URL.Query().Get("filter") != "all" {
-			t.Errorf("unexpected Seerr URL: %s", r.URL.String())
-		}
-		if r.Header.Get("X-Api-Key") != "secret" {
-			t.Errorf("missing API key")
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"pageInfo":{"pages":1},"results":[{"id":4,"media":{"status":5}}]}`))
-	}))
-	defer seerr.Close()
-
-	proxy := httptest.NewServer(newHandler(seerr.Client(), seerr.URL, "secret"))
-	defer proxy.Close()
-
-	resp, err := proxy.Client().Get(proxy.URL + "/api/requests?take=7&filter=all&ignored=yes")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-	var data struct {
-		PageInfo struct {
-			Pages int `json:"pages"`
-		} `json:"pageInfo"`
-		Results []struct {
-			ID int `json:"id"`
-		} `json:"results"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		t.Fatal(err)
-	}
-	if data.PageInfo.Pages != 1 || len(data.Results) != 1 || data.Results[0].ID != 4 {
-		t.Fatalf("unexpected result: %+v", data)
+func TestRawRequestsEndpointNotExposed(t *testing.T) {
+	called := false
+	handler := NewHandler(func(context.Context) (model.Snapshot, error) { called = true; return model.Snapshot{}, nil })
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/requests?take=1000", nil))
+	if response.Code != http.StatusNotFound || called {
+		t.Fatal("removed endpoint must not expose or fetch upstream data")
 	}
 }
-
-func TestUpstreamFailure(t *testing.T) {
-	seerr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized)
-	}))
-	defer seerr.Close()
-	proxy := httptest.NewServer(newHandler(seerr.Client(), seerr.URL, "secret"))
-	defer proxy.Close()
-	resp, err := proxy.Client().Get(proxy.URL + "/api/requests")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadGateway {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-}
-
 func TestDashboardPaginatesAndResolvesTitle(t *testing.T) {
 	calls := 0
 	seerr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

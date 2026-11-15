@@ -51,7 +51,7 @@ docker compose pull reqarr
 docker compose up -d reqarr
 ```
 
-The image must be published before pulling it; see [image publishing](docs/DOCKER.md#publish-an-image).
+The image must be published before pulling it. [Image publishing](docs/DOCKER.md#publish-an-image) covers automatic Docker Hub builds from `main` and manual builds. Running containers only update after pulling and recreating them.
 
 Seerr requires its URL and API key. Radarr and Sonarr are optional; each requires both its URL and key. Availability comes from imported Radarr files and the requested Sonarr seasons. Seerr supplies requests and approvals, and acts as the availability fallback when the relevant integration is not configured. Available means imported into the managed library, independently of media-server indexing.
 
@@ -85,6 +85,8 @@ docker compose up -d --force-recreate reqarr
 ```
 
 The first successful poll establishes a silent baseline. Pushes cover new requests, fulfilled requests and issues needing attention, even with the dashboard closed. Detailed progress stays on the dashboard. Keep the database to preserve the baseline and incident deduplication. Notifications are disabled by default.
+
+Partial TV availability stays silent unless requested episodes are confirmed missing for 10 minutes after a 24-hour airing delay, with no matching active download/import. Related missing episodes produce one attention push per request.
 
 See [notification configuration](docs/NOTIFICATIONS.md) for local settings and delivery behavior.
 

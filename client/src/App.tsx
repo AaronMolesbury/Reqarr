@@ -48,7 +48,7 @@ export default function App() {
                     error={error}
                 />
                 <p className="footer-note">
-                    Availability starts with Seerr. Radarr can identify movies awaiting release; Sonarr can identify upcoming series. Queue states and recent history come from Radarr/Sonarr. History is not a complete event timeline and does not prove current availability.
+                    Requests come from Seerr. Imported movie files and requested-season files determine library availability through Radarr/Sonarr. Queue completion and recent history alone do not prove availability.
                 </p>
             </section>
             {selected && (

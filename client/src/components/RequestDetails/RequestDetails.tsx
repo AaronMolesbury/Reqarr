@@ -1,6 +1,7 @@
 import type { MediaRequest } from '../../types/request'
 import { statusLabels, statusOf } from '../../utils/requestStatus'
 import { dateLabel } from '../../utils/dateLabel'
+import { useDialogFocus } from '../../hooks/useDialogFocus'
 import StatusPill from '../StatusPill/StatusPill'
 import './RequestDetails.css'
 
@@ -10,9 +11,13 @@ type RequestDetailsProps = {
 }
 
 export default function RequestDetails({ request, onClose }: RequestDetailsProps) {
+    const dialogRef = useDialogFocus(onClose)
+
     return (
         <div className="modal-backdrop" onClick={() => onClose()}>
             <section
+                ref={dialogRef}
+                tabIndex={-1}
                 className="detail-modal"
                 role="dialog"
                 aria-modal="true"
@@ -49,6 +54,17 @@ export default function RequestDetails({ request, onClose }: RequestDetailsProps
                     <p className="modal-footnote">
                         {request.statusReason}
                     </p>
+                )}
+                {Boolean(request.missingEpisodes?.length) && (
+                    <div className="detail-note">
+                        <strong>Missing requested episodes</strong>
+                        <p>
+                            {request.missingEpisodes?.map((episode) => `S${episode.seasonNumber} E${episode.episodeNumber}`).join(', ')}
+                        </p>
+                        {request.episodeMissingStale && (
+                            <p>Current episode data is unconfirmed; the previous incident remains unresolved.</p>
+                        )}
+                    </div>
                 )}
                 {request.availabilitySource && (
                     <div className="detail-line">

@@ -86,7 +86,7 @@ export default function RequestTable({ requests, filter, onFilterChange, onSelec
                                 </td>
                                 <td>
                                     <StatusPill status={statusOf(request)} reason={request.statusReason} />
-                                    {request.availabilityStale && (
+                                    {(request.availabilityStale || request.episodeMissingStale) && (
                                         <span className="request-meta">Unconfirmed</span>
                                     )}
                                 </td>

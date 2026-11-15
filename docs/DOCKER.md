@@ -16,6 +16,22 @@ Credentials are supplied at runtime, not included in the image. Keep populated C
 
 ## Publish an image
 
+The GitHub Actions workflow validates pull requests and pushes to `main`. After tests, formatting, static checks and vulnerability checks pass, it builds the image. Pull requests build without publishing or accessing Docker Hub credentials.
+
+To enable publishing, open **Settings → Secrets and variables → Actions** in the GitHub repository and configure:
+
+| Type | Name | Value |
+| --- | --- | --- |
+| Variable | `DOCKERHUB_USERNAME` | Docker Hub login name |
+| Variable | `DOCKERHUB_IMAGE` | Full image name, such as `account/reqarr`, without a tag |
+| Secret | `DOCKERHUB_TOKEN` | Docker Hub access token with write permission |
+
+Create the Docker Hub repository before the first publish. Every successful push to `main` publishes `latest` and `sha-<full-commit-id>` for `linux/amd64`. The workflow can also be run manually from the Actions tab on `main`. Images carry source/revision labels, build provenance and an SBOM; third-party actions are pinned to commit IDs. This does not verify previously published manual images.
+
+Publishing does not update running containers. Pull and recreate the service to deploy. For a fixed release or rollback, use a specific `sha-...` image tag instead of `latest`.
+
+### Manual publishing
+
 Create a `reqarr` repository on Docker Hub, then replace `DOCKERHUB_ACCOUNT` below:
 
 ```sh

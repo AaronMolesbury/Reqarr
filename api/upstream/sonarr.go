@@ -2,6 +2,7 @@ package upstream
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"reqarr/config"
@@ -15,6 +16,21 @@ type Series struct {
 		EpisodeFileCount int `json:"episodeFileCount"`
 	} `json:"statistics"`
 	Seasons []Season `json:"seasons"`
+}
+
+type Episode struct {
+	ID            int    `json:"id"`
+	SeriesID      int    `json:"seriesId"`
+	SeasonNumber  *int   `json:"seasonNumber"`
+	EpisodeNumber *int   `json:"episodeNumber"`
+	HasFile       *bool  `json:"hasFile"`
+	AirDateUTC    string `json:"airDateUtc"`
+}
+
+func FetchSonarrEpisodes(ctx context.Context, client *http.Client, service config.Service, seriesID int) ([]Episode, error) {
+	var episodes []Episode
+	err := FetchJSON(ctx, client, service, fmt.Sprintf("/api/v3/episode?seriesId=%d", seriesID), "Sonarr episodes", 20<<20, &episodes)
+	return episodes, err
 }
 
 type Season struct {

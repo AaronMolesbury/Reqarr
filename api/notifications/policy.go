@@ -34,8 +34,8 @@ func pushContent(title string) (string, string, int) {
 }
 
 func attentionScope(item model.Request) string {
-	if item.Type == "tv" && item.TVDBID > 0 {
-		return fmt.Sprintf("sonarr/%d", item.TVDBID)
+	if item.Type == "tv" {
+		return fmt.Sprintf("request/%d", item.ID)
 	}
 	if item.Type == "movie" && item.TMDBID > 0 {
 		return fmt.Sprintf("radarr/%d", item.TMDBID)
@@ -57,6 +57,9 @@ func currentProblem(item model.Request) bool {
 }
 
 func positiveProgress(key, value string) bool {
+	if strings.HasSuffix(key, "/episode-attention") {
+		return value == "clear"
+	}
 	if strings.HasSuffix(key, "/completion") {
 		return value == "available"
 	}

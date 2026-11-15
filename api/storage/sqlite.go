@@ -27,6 +27,12 @@ func Open(path string) (*sql.DB, error) {
 			id INTEGER PRIMARY KEY, title TEXT NOT NULL, message TEXT NOT NULL,
 			priority INTEGER NOT NULL, sent INTEGER NOT NULL DEFAULT 0
 		);
+		CREATE TABLE IF NOT EXISTS episode_missing_observations (
+			request_id INTEGER NOT NULL, series_id INTEGER NOT NULL, episode_id INTEGER NOT NULL,
+			season_number INTEGER NOT NULL, episode_number INTEGER NOT NULL,
+			since INTEGER NOT NULL, last_seen INTEGER NOT NULL, escalated INTEGER NOT NULL,
+			PRIMARY KEY (request_id, series_id, episode_id)
+		);
 	`)
 	if err != nil {
 		db.Close()

@@ -247,6 +247,12 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 		if qe == nil || he == nil {
 			applyActivity(items, sonarrIDs, queue, history, "sonarr")
 		}
+		// A capped queue cannot prove that an episode has no active transfer.
+		if qe == nil && len(queue) < 500 {
+			if !c.collectEpisodeChecks(ctx, items, sonarrIDs, queue) {
+				integrations["sonarr"] = model.IntegrationPartial
+			}
+		}
 	}
 	return model.Snapshot{Requests: items, Total: len(items), Integrations: integrations}, nil
 }

@@ -14,6 +14,8 @@ type QueueRecord struct {
 	ID             int     `json:"id"`
 	MovieID        int     `json:"movieId"`
 	SeriesID       int     `json:"seriesId"`
+	EpisodeID      int     `json:"episodeId"`
+	SeasonNumber   *int    `json:"seasonNumber"`
 	Status         string  `json:"status"`
 	TrackedStatus  string  `json:"trackedDownloadStatus"`
 	TrackedState   string  `json:"trackedDownloadState"`

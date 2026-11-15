@@ -26,5 +26,5 @@ func newHandler(client *http.Client, baseURL, key string, integrations ...any) h
 		}
 	}
 	c := dashboard.NewCollector(client, config.Service{URL: baseURL, Key: key}, radarr, sonarr)
-	return NewHandler(client, config.Service{URL: baseURL, Key: key}, c.Collect)
+	return NewHandler(c.Collect)
 }

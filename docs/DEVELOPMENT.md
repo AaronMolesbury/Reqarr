@@ -23,7 +23,8 @@ The API binds to `127.0.0.1:8080` by default. It loads `.env` from the working d
 | --- | --- |
 | `GET /api/health` | HTTP process health |
 | `GET /api/dashboard` | Combined request data |
-| `GET /api/requests` | Raw Seerr response for private debugging |
+
+The raw Seerr debugging proxy is not exposed.
 
 Keep these endpoints private: responses can contain requester information. API keys remain server-side.
 
@@ -43,6 +44,8 @@ The dashboard refreshes every 90 seconds while visible. Refresh failures preserv
 
 Seerr supplies requests, approvals and requested seasons. Radarr's explicit imported-file flag determines movie availability; Sonarr per-season file totals determine availability for the requested seasons, without counting files from unrelated seasons. Seerr availability is a fallback when the relevant integration is not configured. Missing or failed checks preserve the last confirmed status in memory and mark it Unconfirmed. Available describes the managed library rather than media-server indexing; details show the evidence source and original Seerr status.
 
+Missing-episode checks fetch one episode list per relevant Sonarr series in each shared poll and reuse the existing queue snapshot. Read-only episode IDs, file flags and UTC air dates drive the 24-hour release delay and per-episode 10-minute grace period; uncertain or capped data cannot establish missing content.
+
 ## Checks and production preview
 
 From `api/`:
@@ -61,4 +64,6 @@ npm run build
 To serve the built client through Go locally, set `STATIC_DIR=../client/dist` when running the API from `api/`. Leave it unset for separate Vite development. Container deployment sets the static directory automatically.
 
 Tests use mock HTTP services, controlled clocks and temporary SQLite databases. They do not establish live integration or container compatibility.
+
+GitHub Actions runs Go formatting, tests, vet and vulnerability checks, plus client tests, build and dependency auditing. Image builds run only after those checks pass. See [publishing setup](DOCKER.md#publish-an-image) for Docker Hub variables and credentials.
 

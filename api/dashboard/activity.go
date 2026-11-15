@@ -85,11 +85,6 @@ func applyActivity(items []model.Request, mediaIDs map[int]int, queue []upstream
 			for _, q := range byID[id] {
 				state := queueState(q)
 				if source == "radarr" && state != "" && items[i].StatusOverride != model.StatusNeedsAttention {
-					// A warning/failure is explicit, but may still be unrelated to the
-					// requested TV season. Do not override for vague warning states.
-					if state == model.StatusNeedsAttention && source == "sonarr" {
-						continue
-					}
 					items[i].StatusOverride = state
 				}
 				items[i].Activity = append(items[i].Activity, model.Activity{Source: source, Type: "Queue: " + q.Status, Message: queueMessage(q), QueueID: q.ID, QueueState: state})

@@ -30,15 +30,17 @@ func main() {
 	stop, cancelStop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancelStop()
 	missing := &dashboard.MissingTracker{}
+	episodeMissing := &dashboard.EpisodeMissingTracker{}
 	collector := dashboard.NewCollector(client, cfg.Seerr, cfg.Radarr, cfg.Sonarr)
 	source := &dashboard.Source{
-		Missing:       missing,
-		Ctx:           stop,
-		Cooldown:      90 * time.Second,
-		ErrorCooldown: 90 * time.Second,
-		Collect:       collector.Collect,
+		Missing:        missing,
+		EpisodeMissing: episodeMissing,
+		Ctx:            stop,
+		Cooldown:       90 * time.Second,
+		ErrorCooldown:  90 * time.Second,
+		Collect:        collector.Collect,
 	}
-	handler := server.NewHandler(client, cfg.Seerr, source.Get)
+	handler := server.NewHandler(source.Get)
 	if cfg.StaticDir != "" {
 		if _, err := os.Stat(cfg.StaticDir + "/index.html"); err != nil {
 			log.Fatal("STATIC_DIR must contain the built client index.html")
@@ -61,6 +63,7 @@ func main() {
 		}
 		defer db.Close()
 		missing.DB = db
+		episodeMissing.DB = db
 		monitorDone = make(chan struct{})
 		go func() {
 			defer close(monitorDone)
