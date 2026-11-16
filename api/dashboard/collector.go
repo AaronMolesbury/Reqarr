@@ -142,14 +142,17 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 	}
 	radarrIDs := make(map[int]int)
 	sonarrIDs := make(map[int]int)
+	catalogs := make(map[string]model.ImportCatalog)
 	// Explicit imported-file evidence takes precedence over Seerr's media status.
 	if radarr.URL != "" {
 		movies, err := upstream.FetchRadarrMovies(ctx, client, radarr)
+		catalogs["radarr"] = model.ImportCatalog{}
 		integrations["radarr"] = model.IntegrationSuccess
 		if err != nil {
 			integrations["radarr"] = model.IntegrationError
 			log.Printf("Radarr lookup failed (availability unconfirmed): %v", err)
 		} else {
+			catalogs["radarr"] = upstream.MovieImportCatalog(movies)
 			for i := range items {
 				if items[i].Type != "movie" || items[i].TMDBID <= 0 {
 					continue
@@ -181,11 +184,13 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 	// series from aggregate counts: requested seasons may differ.
 	if sonarr.URL != "" {
 		series, err := upstream.FetchSonarrSeries(ctx, client, sonarr)
+		catalogs["sonarr"] = model.ImportCatalog{}
 		integrations["sonarr"] = model.IntegrationSuccess
 		if err != nil {
 			integrations["sonarr"] = model.IntegrationError
 			log.Printf("Sonarr lookup failed (availability unconfirmed): %v", err)
 		} else {
+			catalogs["sonarr"] = upstream.SeriesImportCatalog(series)
 			for i := range items {
 				if items[i].Type != "tv" || items[i].TVDBID <= 0 {
 					continue
@@ -219,6 +224,11 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 	if radarr.URL != "" && len(radarrIDs) > 0 {
 		queue, qe := upstream.FetchArrPages[upstream.QueueRecord](ctx, client, radarr.URL, radarr.Key, "queue", 500)
 		history, he := upstream.FetchArrPages[upstream.HistoryRecord](ctx, client, radarr.URL, radarr.Key, "history", 500)
+		catalog := catalogs["radarr"]
+		catalog.HistoryAttempted = true
+		catalog.HistoryKnown = he == nil
+		catalog.History = upstream.ImportHistory(history)
+		catalogs["radarr"] = catalog
 		if qe != nil || he != nil {
 			integrations["radarr"] = model.IntegrationPartial
 		}
@@ -235,6 +245,11 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 	if sonarr.URL != "" && len(sonarrIDs) > 0 {
 		queue, qe := upstream.FetchArrPages[upstream.QueueRecord](ctx, client, sonarr.URL, sonarr.Key, "queue", 500)
 		history, he := upstream.FetchArrPages[upstream.HistoryRecord](ctx, client, sonarr.URL, sonarr.Key, "history", 500)
+		catalog := catalogs["sonarr"]
+		catalog.HistoryAttempted = true
+		catalog.HistoryKnown = he == nil
+		catalog.History = upstream.ImportHistory(history)
+		catalogs["sonarr"] = catalog
 		if qe != nil || he != nil {
 			integrations["sonarr"] = model.IntegrationPartial
 		}
@@ -254,5 +269,5 @@ func (c *Collector) Collect(ctx context.Context) (model.Snapshot, error) {
 			}
 		}
 	}
-	return model.Snapshot{Requests: items, Total: len(items), Integrations: integrations}, nil
+	return model.Snapshot{Requests: items, Total: len(items), Integrations: integrations, ImportCatalogs: catalogs}, nil
 }

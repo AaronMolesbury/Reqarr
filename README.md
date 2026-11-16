@@ -88,7 +88,7 @@ Recreate the container to apply settings changes:
 docker compose up -d --force-recreate reqarr
 ```
 
-The first successful poll establishes a silent baseline. Pushes cover new requests, fulfilled requests and issues needing attention, even with the dashboard closed. Detailed progress stays on the dashboard. Keep the database to preserve the baseline and incident deduplication. Notifications are disabled by default.
+Pushes cover new Seerr requests, first film/episode imports, and issues needing attention, even with the dashboard closed. Import pushes also cover content added directly in Radarr/Sonarr; upgrades stay silent. The dashboard remains Seerr-request focused. Existing content is silently baselined, so enabling monitoring does not send a backlog. Keep the database to preserve baselines and deduplication. Notifications are disabled by default.
 
 Partial TV availability stays silent unless requested episodes are confirmed missing for 10 minutes after a 24-hour airing delay, with no matching active download/import. Related missing episodes produce one attention push per request.
 

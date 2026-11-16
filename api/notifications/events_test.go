@@ -281,7 +281,7 @@ func TestNotificationMonitorRunsWithoutBrowserRequests(t *testing.T) {
 				snapshot.Requests[0].MediaStatus = 5
 			}
 			return snapshot, nil
-		})
+		}, nil)
 	}()
 	select {
 	case <-delivered:

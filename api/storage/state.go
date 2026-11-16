@@ -8,6 +8,15 @@ import (
 
 type StateTx struct{ tx *sql.Tx }
 
+func GetState(ctx context.Context, db *sql.DB, key string) (string, bool, error) {
+	var value string
+	err := db.QueryRowContext(ctx, "SELECT value FROM notification_state WHERE key = ?", key).Scan(&value)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", false, nil
+	}
+	return value, err == nil, err
+}
+
 func BeginState(ctx context.Context, db *sql.DB) (*StateTx, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {

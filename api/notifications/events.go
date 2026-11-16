@@ -127,7 +127,11 @@ func Observe(ctx context.Context, db *sql.DB, snapshot model.Snapshot, fetchErr 
 					}
 				}
 				title := ""
-				if completion == "available" {
+				source := "radarr"
+				if item.Type == "tv" {
+					source = "sonarr"
+				}
+				if completion == "available" && !snapshot.ImportSources[source] {
 					title = completedTitle
 				}
 				if err := change(scope, prefix+"completion", completion, title, isNew); err != nil {

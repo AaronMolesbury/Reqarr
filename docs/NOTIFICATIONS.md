@@ -22,18 +22,20 @@ Apply changed settings with `docker compose up -d --force-recreate reqarr`. For 
 | Title | Message |
 | --- | --- |
 | Reqarr: New request | A new request was made. |
-| Reqarr: Completed | Request fulfilled. |
+| Reqarr: Completed | A film was imported. / A TV episode was imported. |
 | Reqarr: Needs attention | Request had a problem; see dashboard for details. |
 
-Service problems use the same Needs attention title with a short service message. Routine approval, processing, downloading, importing and recovery stay on the dashboard. Messages contain no media titles, requester names or internal addresses.
+Service problems use the same Needs attention title with a short service message. Routine approval, processing, download progress and recovery stay on the dashboard. Messages contain no media titles, requester names or internal addresses.
 
-Completion follows the dashboard's availability result:
+Completion pushes watch successful Radarr/Sonarr import history across the configured libraries, including content added directly rather than requested through Seerr:
 
-- Radarr confirms an imported movie file.
-- Sonarr confirms files for all known episodes in every requested season. Unrelated seasons do not count; missing season data cannot confirm completion.
-- Seerr availability is the fallback when the relevant integration is not configured.
+- One push for the first imported film.
+- One push for each first imported TV episode, even while its season is partially available.
+- Quality upgrades and subsequent reimports of known content stay silent, including after restarts.
 
-Available means imported into the managed library, independently of media-server indexing. Download completion or import history alone is insufficient. Seerr catching up afterward does not repeat the completion push.
+Seerr completion does not add another push for the same content when import monitoring is configured. If the relevant Radarr/Sonarr integration is not configured, Seerr availability remains the request-completion fallback.
+
+The dashboard stays focused on Seerr requests and uses current imported-file evidence for Available. An import push reports an import event; it does not prove that the file still exists or that a media server has indexed it. A grab or completed download is not an import. Existing missing-content attention rules remain request-focused.
 
 Explicit failures, queue problems and movies continuously confirmed Missing for 10 minutes can trigger attention. Related evidence shares one active incident; additional evidence stays silent until positive progress permits a new incident. Uncertain data does not establish recovery.
 
@@ -43,8 +45,10 @@ Failed lookups, capped queues, unknown air dates/file flags and ambiguous queue 
 
 ## Persistence and timing
 
-The first successful poll silently baselines existing requests and incidents. Keep `/data/reqarr.db` persistent in Docker, or `data/reqarr.db` when running the API locally. `NOTIFICATION_DB` overrides the path. SQLite retains deduplication and pending deliveries across restarts; failed deliveries retry. A lost acceptance response can still cause duplicate delivery.
+The first successful request poll silently baselines existing requests and incidents. Each import source also establishes its own silent baseline of existing files and recent imports. Sonarr reads its episode lists for that initial baseline; afterward, episode identities are reused and lists are fetched for new history references as needed. Failed initial checks do not establish a baseline.
 
-Monitoring runs without a browser. Notifications default to 15-second cycles and share upstream collection with the dashboard. Failed collections retain at least a 90-second cooldown; browser refresh remains 90 seconds. Polling can miss intermediate changes.
+Keep `/data/reqarr.db` persistent in Docker, or `data/reqarr.db` when running the API locally. `NOTIFICATION_DB` overrides the path. SQLite retains imported-content identities, history checkpoints, deduplication and pending deliveries across restarts; failed deliveries retry. A lost acceptance response can still cause duplicate delivery. Removing the database creates fresh silent baselines.
+
+Monitoring runs without a browser. Notifications default to 15-second cycles and reuse the dashboard's library/history responses when available. Import checks can continue when Seerr is unavailable; failed import sources wait at least 90 seconds before retrying. Browser refresh remains 90 seconds. Import history is bounded to 500 recent records per source, so long outages or very busy libraries can miss events. Imports that occur during initial baselining are not replayed as a backlog.
 
 Failed availability checks retain the last confirmed dashboard status as Unconfirmed. That availability cache is in memory and resets on API restart; notification deduplication remains on disk. Older queued progress/recovery pushes are discarded on delivery.

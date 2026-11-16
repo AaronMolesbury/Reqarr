@@ -69,10 +69,12 @@ func (r Request) EffectiveStatus() string {
 }
 
 type Snapshot struct {
-	CheckedAt    string            `json:"checkedAt,omitempty"`
-	Requests     []Request         `json:"requests"`
-	Total        int               `json:"total"`
-	Integrations map[string]string `json:"integrations"`
+	CheckedAt      string                   `json:"checkedAt,omitempty"`
+	Requests       []Request                `json:"requests"`
+	Total          int                      `json:"total"`
+	Integrations   map[string]string        `json:"integrations"`
+	ImportCatalogs map[string]ImportCatalog `json:"-"`
+	ImportSources  map[string]bool          `json:"-"`
 }
 
 type CollectFunc func(context.Context) (Snapshot, error)

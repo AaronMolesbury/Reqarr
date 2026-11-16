@@ -58,6 +58,9 @@ func Deliver(ctx context.Context, db *sql.DB, client *http.Client, c config.Noti
 		if pending.Title == attentionTitle && pending.Message == serviceAttentionMessage {
 			message = serviceAttentionMessage
 		}
+		if pending.Title == completedTitle && (pending.Message == filmImportedMessage || pending.Message == episodeImportedMessage) {
+			message = pending.Message
+		}
 		if title == "" {
 			// Discard obsolete progress alerts queued by earlier versions.
 			if err := storage.MarkSent(ctx, db, id); err != nil {

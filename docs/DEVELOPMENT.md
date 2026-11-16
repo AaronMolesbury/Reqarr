@@ -46,6 +46,8 @@ Seerr supplies requests, approvals and requested seasons. Radarr's explicit impo
 
 Missing-episode checks fetch one episode list per relevant Sonarr series in each shared poll and reuse the existing queue snapshot. Read-only episode IDs, file flags and UTC air dates drive the 24-hour release delay and per-episode 10-minute grace period; uncertain or capped data cannot establish missing content.
 
+Import notifications cover the configured Radarr/Sonarr libraries independently of Seerr requests. Shared catalog/history responses are reused; direct reads support import checks during Seerr outages. SQLite records first-import identities and checkpoints so request completion, upgrades and restarts do not duplicate import pushes. The first Sonarr baseline reads episode lists for existing series; subsequent checks cache episode identities.
+
 ## Checks and production preview
 
 From `api/`:

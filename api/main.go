@@ -67,7 +67,7 @@ func main() {
 		monitorDone = make(chan struct{})
 		go func() {
 			defer close(monitorDone)
-			notifications.Run(stop, db, client, cfg.Notifications, source.Get)
+			notifications.Run(stop, db, client, cfg.Notifications, source.Get, &notifications.ImportWatcher{Client: client, Radarr: cfg.Radarr, Sonarr: cfg.Sonarr})
 		}()
 		log.Printf("Notification monitor enabled: interval=%s; saved baseline reused if present", cfg.Notifications.Interval)
 	} else {

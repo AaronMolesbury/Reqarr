@@ -27,8 +27,10 @@ type QueueRecord struct {
 	ErrorMessage string `json:"errorMessage"`
 }
 type HistoryRecord struct {
+	ID        int64             `json:"id"`
 	MovieID   int               `json:"movieId"`
 	SeriesID  int               `json:"seriesId"`
+	EpisodeID int               `json:"episodeId"`
 	EventType string            `json:"eventType"`
 	Date      string            `json:"date"`
 	Data      map[string]string `json:"data"`
